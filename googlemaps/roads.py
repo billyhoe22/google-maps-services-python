@@ -50,7 +50,7 @@ def snap_to_roads(client, path, interpolate=False):
     if interpolate:
         params["interpolate"] = "true"
 
-    return client._get("/v1/snapToRoads", params,
+    return client._request("/v1/snapToRoads", params,
                        base_url=_ROADS_BASE_URL,
                        accepts_clientid=False,
                        extract_body=_roads_extract).get("snappedPoints", [])
@@ -72,7 +72,7 @@ def nearest_roads(client, points):
 
     params = {"points": convert.location_list(points)}
 
-    return client._get("/v1/nearestRoads", params,
+    return client._request("/v1/nearestRoads", params,
                        base_url=_ROADS_BASE_URL,
                        accepts_clientid=False,
                        extract_body=_roads_extract).get("snappedPoints", [])
@@ -89,10 +89,10 @@ def speed_limits(client, place_ids):
 
     params = [("placeId", place_id) for place_id in convert.as_list(place_ids)]
 
-    return client._get("/v1/speedLimits", params,
+    return client._request("/v1/speedLimits", params,
                        base_url=_ROADS_BASE_URL,
                        accepts_clientid=False,
-                       extract_body=_roads_extract)["speedLimits"]
+                       extract_body=_roads_extract).get("speedLimits", [])
 
 
 def snapped_speed_limits(client, path):
@@ -110,7 +110,7 @@ def snapped_speed_limits(client, path):
 
     params = {"path": convert.location_list(path)}
 
-    return client._get("/v1/speedLimits", params,
+    return client._request("/v1/speedLimits", params,
                        base_url=_ROADS_BASE_URL,
                        accepts_clientid=False,
                        extract_body=_roads_extract)
@@ -133,12 +133,10 @@ def _roads_extract(resp):
         status = error["status"]
 
         if status == "RESOURCE_EXHAUSTED":
-            raise googlemaps.exceptions._RetriableRequest()
+            raise googlemaps.exceptions._OverQueryLimit(status,
+                                                        error.get("message"))
 
-        if "message" in error:
-            raise googlemaps.exceptions.ApiError(status, error["message"])
-        else:
-            raise googlemaps.exceptions.ApiError(status)
+        raise googlemaps.exceptions.ApiError(status, error.get("message"))
 
     if resp.status_code != 200:
         raise googlemaps.exceptions.HTTPError(resp.status_code)

@@ -27,7 +27,7 @@ class ApiError(Exception):
 
     def __str__(self):
         if self.message is None:
-            return self.status
+            return str(self.status)
         else:
             return "%s (%s)" % (self.status, self.message)
 
@@ -57,4 +57,12 @@ class Timeout(Exception):
 
 class _RetriableRequest(Exception):
     """Signifies that the request can be retried."""
+    pass
+
+class _OverQueryLimit(ApiError, _RetriableRequest):
+    """Signifies that the request failed because the client exceeded its query rate limit.
+
+    Normally we treat this as a retriable condition, but we allow the calling code to specify that these requests should
+    not be retried.
+    """
     pass

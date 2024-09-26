@@ -28,9 +28,10 @@ dist/
 
 # python testing things etc
 .coverage
-.tox
+.nox
 env
-nosetests.xml
 googlemaps.egg-info
 *.egg
-
+.vscode/
+.idea/
+index.py

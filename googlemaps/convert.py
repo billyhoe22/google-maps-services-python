@@ -28,15 +28,14 @@
     # '-33.8674869,151.2069902'
 """
 
-import time as _time
-
 
 def format_float(arg):
     """Formats a float value to be as short as possible.
 
-    Trims extraneous trailing zeros and period to give API
-    args the best possible chance of fitting within 2000 char
-    URL length restrictions.
+    Truncates float to 8 decimal places and trims extraneous
+    trailing zeros and period to give API args the best
+    possible chance of fitting within 2000 char URL length
+    restrictions.
 
     For example:
 
@@ -45,13 +44,15 @@ def format_float(arg):
     format_float(40.1) -> "40.1"
     format_float(40.001) -> "40.001"
     format_float(40.0010) -> "40.001"
+    format_float(40.000000001) -> "40"
+    format_float(40.000000009) -> "40.00000001"
 
     :param arg: The lat or lng float.
     :type arg: float
 
     :rtype: string
     """
-    return ("%f" % float(arg)).rstrip("0").rstrip(".")
+    return ("%.8f" % float(arg)).rstrip("0").rstrip(".")
 
 
 def latlng(arg):
@@ -159,9 +160,7 @@ def _is_list(arg):
         return False
     if isinstance(arg, str): # Python 3-only, as str has __iter__
         return False
-    return (not _has_method(arg, "strip")
-            and _has_method(arg, "__getitem__")
-            or _has_method(arg, "__iter__"))
+    return _has_method(arg, "__getitem__") if not _has_method(arg, "strip") else _has_method(arg, "__iter__")
 
 
 def is_string(val):
@@ -184,8 +183,8 @@ def time(arg):
     :type arg: datetime.datetime or int
     """
     # handle datetime instances.
-    if _has_method(arg, "timetuple"):
-        arg = _time.mktime(arg.timetuple())
+    if _has_method(arg, "timestamp"):
+        arg = arg.timestamp()
 
     if isinstance(arg, float):
         arg = int(arg)
@@ -265,13 +264,26 @@ def bounds(arg):
     :type arg: dict
     """
 
-    if isinstance(arg, dict):
+    if is_string(arg) and arg.count("|") == 1 and arg.count(",") == 2:
+        return arg
+    elif isinstance(arg, dict):
         if "southwest" in arg and "northeast" in arg:
             return "%s|%s" % (latlng(arg["southwest"]),
                               latlng(arg["northeast"]))
 
     raise TypeError(
         "Expected a bounds (southwest/northeast) dict, "
+        "but got %s" % type(arg).__name__)
+
+
+def size(arg):
+    if isinstance(arg, int):
+        return "%sx%s" % (arg, arg)
+    elif _is_list(arg):
+        return "%sx%s" % (arg[0], arg[1])
+
+    raise TypeError(
+        "Expected a size int or list, "
         "but got %s" % type(arg).__name__)
 
 

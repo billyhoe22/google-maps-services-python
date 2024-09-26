@@ -15,10 +15,10 @@
 # the License.
 #
 
-__version__ = "2.4.5-dev"
+__version__ = "4.10.0"
 
 from googlemaps.client import Client
-import googlemaps.exceptions
+from googlemaps import exceptions
 
-# Allow sphinx to pick up these symbols for the documentation.
-__all__ = ["Client"]
+
+__all__ = ["Client", "exceptions"]
